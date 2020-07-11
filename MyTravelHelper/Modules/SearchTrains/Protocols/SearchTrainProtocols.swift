@@ -23,6 +23,7 @@ protocol PresenterToViewProtocol: class{
     func showNoTrainsFoundAlert()
     func showNoTrainAvailbilityFromSource()
     func showNoInterNetAvailabilityMessage()
+    func showNoStationAvailabilityMessage()
 }
 
 protocol PresenterToRouterProtocol: class {
@@ -40,4 +41,5 @@ protocol InteractorToPresenterProtocol: class {
     func fetchedTrainsList(trainsList:[StationTrain]?)
     func showNoTrainAvailbilityFromSource()
     func showNoInterNetAvailabilityMessage()
+    func showNoStationAvailabilityMessage()
 }

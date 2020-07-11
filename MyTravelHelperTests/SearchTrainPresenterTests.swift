@@ -59,6 +59,10 @@ class SearchTrainMockView:PresenterToViewProtocol {
     func showNoInterNetAvailabilityMessage() {
 
     }
+
+    func showNoStationAvailabilityMessage() {
+
+    }
 }
 
 class SearchTrainInteractorMock:PresenterToInteractorProtocol {

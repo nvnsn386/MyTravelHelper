@@ -10,16 +10,54 @@ import Foundation
 import XMLParsing
 import Alamofire
 
+
+protocol ServiceManagable {
+    func fetchAllStations(completionHandler: @escaping (Data?) -> Void)
+    func fetchTrainsFromSource(sourceCode: String, completionHandler: @escaping (Data?) -> Void)
+    func fetchTrainMovement(trainCode: String, trainDate: String, completionHandler: @escaping (Data?) -> Void)
+}
+
+class ServiceManager: ServiceManagable {
+    func fetchAllStations(completionHandler: @escaping (Data?) -> Void) {
+        Alamofire.request("http://api.irishrail.ie/realtime/realtime.asmx/getAllStationsXML")
+            .response { (response) in
+                completionHandler(response.data)
+        }
+    }
+
+    func fetchTrainsFromSource(sourceCode: String, completionHandler: @escaping (Data?) -> Void) {
+        let urlString = "http://api.irishrail.ie/realtime/realtime.asmx/getStationDataByCodeXML?StationCode=\(sourceCode)"
+        Alamofire.request(urlString).response { (response) in
+            completionHandler(response.data)
+        }
+    }
+
+    func fetchTrainMovement(trainCode: String, trainDate: String, completionHandler: @escaping (Data?) -> Void) {
+          let _urlString = "http://api.irishrail.ie/realtime/realtime.asmx/getTrainMovementsXML?TrainId=\(trainCode)&TrainDate=\(trainDate)"
+        Alamofire.request(_urlString).response { (response) in
+            completionHandler(response.data)
+        }
+    }
+}
+
 class SearchTrainInteractor: PresenterToInteractorProtocol {
     var _sourceStationCode = String()
     var _destinationStationCode = String()
     var presenter: InteractorToPresenterProtocol?
+    private var serviceManager: ServiceManagable
+
+    init(serviceManager: ServiceManagable = ServiceManager()) {
+        self.serviceManager = serviceManager
+    }
 
     func fetchallStations() {
         if Reach().isNetworkReachable() == true {
-            Alamofire.request("http://api.irishrail.ie/realtime/realtime.asmx/getAllStationsXML")
-                .response { (response) in
-                let station = try? XMLDecoder().decode(Stations.self, from: response.data!)
+            serviceManager.fetchAllStations { (data) in
+                guard let responseData = data else {
+                    self.presenter!.showNoStationAvailabilityMessage()
+                    return
+                }
+                let station = try? XMLDecoder().decode(Stations.self, from: responseData)
                 self.presenter!.stationListFetched(list: station!.stationsList)
             }
         } else {
@@ -30,10 +68,15 @@ class SearchTrainInteractor: PresenterToInteractorProtocol {
     func fetchTrainsFromSource(sourceCode: String, destinationCode: String) {
         _sourceStationCode = sourceCode
         _destinationStationCode = destinationCode
-        let urlString = "http://api.irishrail.ie/realtime/realtime.asmx/getStationDataByCodeXML?StationCode=\(sourceCode)"
+
         if Reach().isNetworkReachable() {
-            Alamofire.request(urlString).response { (response) in
-                let stationData = try? XMLDecoder().decode(StationData.self, from: response.data!)
+            serviceManager.fetchTrainsFromSource(sourceCode: sourceCode) { (data) in
+                guard let responseData = data else {
+                    self.presenter!.showNoTrainAvailbilityFromSource()
+                    return
+                }
+                let stationData = try? XMLDecoder().decode(StationData.self, from: responseData)
+
                 if let _trainsList = stationData?.trainsList {
                     self.proceesTrainListforDestinationCheck(trainsList: _trainsList)
                 } else {
@@ -55,10 +98,11 @@ class SearchTrainInteractor: PresenterToInteractorProtocol {
         
         for index  in 0...trainsList.count-1 {
             group.enter()
-            let _urlString = "http://api.irishrail.ie/realtime/realtime.asmx/getTrainMovementsXML?TrainId=\(trainsList[index].trainCode)&TrainDate=\(dateString)"
             if Reach().isNetworkReachable() {
-                Alamofire.request(_urlString).response { (movementsData) in
-                    let trainMovements = try? XMLDecoder().decode(TrainMovementsData.self, from: movementsData.data!)
+                serviceManager.fetchTrainMovement(trainCode: trainsList[index].trainCode,
+                                                  trainDate: dateString) { movementsData in
+
+                                                    let trainMovements = try? XMLDecoder().decode(TrainMovementsData.self, from: movementsData!)
 
                     if let _movements = trainMovements?.trainMovements {
                         let sourceIndex = _movements.firstIndex(where: {$0.locationCode.caseInsensitiveCompare(self._sourceStationCode) == .orderedSame})

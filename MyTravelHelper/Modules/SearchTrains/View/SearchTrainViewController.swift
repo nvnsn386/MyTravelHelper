@@ -57,6 +57,15 @@ extension SearchTrainViewController:PresenterToViewProtocol {
                   actionTitle: "Okay")
     }
 
+    func showNoStationAvailabilityMessage() {
+        trainsListTable.isHidden = true
+        hideProgressIndicator(view: self.view)
+        showAlert(title: "No Station",
+                  message: "Please try again!",
+                  actionTitle: "Okay")
+    }
+
+
     func showNoTrainAvailbilityFromSource() {
         trainsListTable.isHidden = true
         hideProgressIndicator(view: self.view)
@@ -68,11 +77,16 @@ extension SearchTrainViewController:PresenterToViewProtocol {
     func updateLatestTrainList(trainsList: [StationTrain]) {
         trains = trainsList
         hideProgressIndicator(view: self.view)
-
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.trainsListTable.isHidden = false
-            self.trainsListTable.reloadData()
+        if trainsList.count == 0 {
+            showAlert(title: "No Trains",
+                             message: "Sorry No trains arriving source station in another 90 mins",
+                             actionTitle: "Okay")
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                       guard let self = self else { return }
+                       self.trainsListTable.isHidden = false
+                       self.trainsListTable.reloadData()
+                   }
         }
     }
 

@@ -52,4 +52,8 @@ extension SearchTrainPresenter: InteractorToPresenterProtocol {
         stationsList = list
         view!.saveFetchedStations(stations: list)
     }
+
+    func showNoStationAvailabilityMessage() {
+        view!.showNoStationAvailabilityMessage()
+    }
 }
