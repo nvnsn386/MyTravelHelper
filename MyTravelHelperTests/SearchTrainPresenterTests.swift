@@ -66,6 +66,14 @@ class SearchTrainMockView:PresenterToViewProtocol {
 }
 
 class SearchTrainInteractorMock:PresenterToInteractorProtocol {
+    func saveFavouriteStation(isSourceStation: Bool, stationName: String) {
+
+    }
+
+    func loadFavouriteStation(callback: (String, String) -> Void) {
+
+    }
+
     var presenter: InteractorToPresenterProtocol?
 
     func fetchAllStations() {

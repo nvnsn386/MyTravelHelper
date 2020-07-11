@@ -20,10 +20,17 @@ class SearchTrainViewController: UIViewController {
     var presenter:ViewToPresenterProtocol?
     var dropDown = DropDown()
     var transitPoints:(source:String,destination:String) = ("","")
+    var favouriteSource = ""
+    var favouriteDestination = ""
 
     override func viewDidLoad() {
         super.viewDidLoad()
         trainsListTable.isHidden = true
+
+        presenter?.loadFavouriteStation(callback: { (favouriteSource, favouriteDestination) in
+            sourceTxtField.text = favouriteSource
+            destinationTextField.text = favouriteDestination
+        })
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -122,6 +129,7 @@ extension SearchTrainViewController:PresenterToViewProtocol {
 }
 
 extension SearchTrainViewController:UITextFieldDelegate {
+
     func textFieldDidBeginEditing(_ textField: UITextField) {
         dropDown = DropDown()
         dropDown.anchorView = textField
@@ -135,8 +143,22 @@ extension SearchTrainViewController:UITextFieldDelegate {
                 self.transitPoints.destination = item
             }
             textField.text = item
+            self.view.endEditing(true)
+            let selectedStation = (textField == self.sourceTxtField) ? self.transitPoints.source: self.transitPoints.destination
+            self.showFavouriteStationAlert(isSourceStation: (textField == self.sourceTxtField), stationName: selectedStation)
         }
         dropDown.show()
+    }
+
+    func showFavouriteStationAlert(isSourceStation: Bool, stationName: String) {
+        let alert = UIAlertController(title: "Favourite Station", message: "Do you want to make station as favourite",
+                                      preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: { [weak self] (action) in
+            guard let self = self else { return }
+            self.presenter?.saveFavouriteStation(isSourceStation: isSourceStation, stationName: stationName)
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

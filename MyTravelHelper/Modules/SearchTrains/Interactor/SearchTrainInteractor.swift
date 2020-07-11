@@ -22,6 +22,7 @@ class SearchTrainInteractor: PresenterToInteractorProtocol {
     private var serviceManager: ServiceManagable
     private var reachablity: Reachable
     private var xmlDecoder: XMLDecodable
+    private let userDefaults = UserDefaults.standard
 
     init(serviceManager: ServiceManagable = ServiceManager(),
          reachablity: Reachable = Reach(),
@@ -29,6 +30,26 @@ class SearchTrainInteractor: PresenterToInteractorProtocol {
         self.serviceManager = serviceManager
         self.reachablity = reachablity
         self.xmlDecoder = xmlDecoder
+    }
+
+    func saveFavouriteStation(isSourceStation: Bool, stationName: String) {
+        if isSourceStation {
+            userDefaults.setValue(stationName, forKey: favouriteSourceKey)
+        } else {
+            userDefaults.setValue(stationName, forKey: favouriteDestinationKey)
+        }
+    }
+
+    func loadFavouriteStation(callback: (String, String) -> Void) {
+        var sourceStation = ""
+        var destinationStation = ""
+        if let source = userDefaults.value(forKey: favouriteSourceKey) as? String {
+            sourceStation = source
+        }
+        if let destination = userDefaults.value(forKey: favouriteDestinationKey) as? String {
+            destinationStation = destination
+        }
+        callback(sourceStation, destinationStation)
     }
 
     func fetchAllStations() {

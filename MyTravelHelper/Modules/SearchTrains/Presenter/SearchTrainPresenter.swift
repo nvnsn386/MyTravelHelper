@@ -29,6 +29,14 @@ class SearchTrainPresenter:ViewToPresenterProtocol {
         let stationCode = stationsList.filter{$0.stationDesc == stationName}.first
         return stationCode?.stationCode.lowercased() ?? ""
     }
+
+    func saveFavouriteStation(isSourceStation: Bool, stationName: String) {
+        interactor?.saveFavouriteStation(isSourceStation: isSourceStation, stationName: stationName)
+    }
+
+    func loadFavouriteStation(callback: (String, String) -> Void) {
+        interactor?.loadFavouriteStation(callback: callback)
+    }
 }
 
 extension SearchTrainPresenter: InteractorToPresenterProtocol {
