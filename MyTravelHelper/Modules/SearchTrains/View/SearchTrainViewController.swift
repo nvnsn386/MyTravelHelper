@@ -43,43 +43,43 @@ class SearchTrainViewController: UIViewController {
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self = self else { return }
             self.presenter?.searchTapped(source: self.transitPoints.source,
-                                          destination: self.transitPoints.destination)
+                                         destination: self.transitPoints.destination)
         }
     }
 }
 
 extension SearchTrainViewController:PresenterToViewProtocol {
     func showNoInterNetAvailabilityMessage() {
-        trainsListTable.isHidden = true
-        hideProgressIndicator(view: self.view)
-        showAlert(title: "No Internet",
-                  message: "Please Check you internet connection and try again",
-                  actionTitle: "Okay")
+        DispatchQueue.main.async { [weak self] in
+            self?.showwAlert("No Internet", description: "Please Check you internet connection and try again")
+        }
     }
 
     func showNoStationAvailabilityMessage() {
-        trainsListTable.isHidden = true
+        DispatchQueue.main.async { [weak self] in
+            self?.showwAlert("No Station", description: "Please try again!")
+        }
+    }
+
+    private func showwAlert(_ title: String, description: String) {
         hideProgressIndicator(view: self.view)
-        showAlert(title: "No Station",
-                  message: "Please try again!",
-                  actionTitle: "Okay")
+        trainsListTable.isHidden = true
+        showAlert(title: title, message: description, actionTitle: "Okay")
     }
 
     func showNoTrainAvailbilityFromSource() {
-        trainsListTable.isHidden = true
-        hideProgressIndicator(view: self.view)
-        showAlert(title: "No Trains",
-                  message: "Sorry No trains arriving source station in another 90 mins",
-                  actionTitle: "Okay")
+        DispatchQueue.main.async { [weak self] in
+            self?.showwAlert("No Trains", description: "Sorry No trains arriving source station in another 90 mins")
+        }
     }
 
     func updateLatestTrainList(trainsList: [StationTrain]) {
         trains = trainsList
         hideProgressIndicator(view: self.view)
         if trainsList.count == 0 {
-            showAlert(title: "No Trains",
-                      message: "Sorry No trains arriving source station in another 90 mins",
-                      actionTitle: "Okay")
+            DispatchQueue.main.async { [weak self] in
+                self?.showwAlert("No Trains", description: "Sorry No trains arriving source station in another 90 mins")
+            }
         }
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -113,7 +113,7 @@ extension SearchTrainViewController:PresenterToViewProtocol {
 
     func saveFetchedStations(stations: [Station]?) {
         if let _stations = stations {
-          self.stationsList = _stations
+            self.stationsList = _stations
         }
         DispatchQueue.main.async {
             SwiftSpinner.hide()

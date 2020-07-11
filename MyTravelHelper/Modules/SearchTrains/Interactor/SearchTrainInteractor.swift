@@ -9,71 +9,64 @@
 import Foundation
 import XMLParsing
 
-protocol ServiceManagable {
-    func fetchAllStations(completionHandler: @escaping (Data?) -> Void)
-    func fetchTrainsFromSource(sourceCode: String, completionHandler: @escaping (Data?) -> Void)
-    func fetchTrainMovement(trainCode: String, trainDate: String, completionHandler: @escaping (Data?) -> Void)
+protocol XMLDecodable {
+    func decode<T : Decodable>(_ type: T.Type, from data: Data) throws -> T
 }
 
-class ServiceManager: ServiceManagable {
-    private let baseURL = "http://api.irishrail.ie/realtime/realtime.asmx"
-    let session = URLSession.shared
-
-    private func getData(pathComponent: String, completionHandler: @escaping (Data?) -> Void) {
-        let url = URL(string: baseURL + pathComponent)!
-        var request = URLRequest(url: url)
-        request.httpMethod  = "get"
-
-        let task = session.dataTask(with: request as URLRequest, completionHandler: { data, response, error in
-            guard error == nil else {
-                completionHandler(nil)
-                return
-            }
-            guard let data = data else {
-                completionHandler(nil)
-                return
-            }
-            completionHandler(data)
-        })
-        task.resume()
-    }
-
-    func fetchAllStations(completionHandler: @escaping (Data?) -> Void) {
-        getData(pathComponent: "/getAllStationsXML", completionHandler: completionHandler)
-    }
-
-    func fetchTrainsFromSource(sourceCode: String, completionHandler: @escaping (Data?) -> Void) {
-        getData(pathComponent: "/getStationDataByCodeXML?StationCode=\(sourceCode)", completionHandler: completionHandler)
-    }
-
-    func fetchTrainMovement(trainCode: String, trainDate: String, completionHandler: @escaping (Data?) -> Void) {
-        getData(pathComponent: "/getTrainMovementsXML?TrainId=\(trainCode)&TrainDate=\(trainDate)", completionHandler: completionHandler)
-    }
-}
+extension XMLDecoder: XMLDecodable {}
 
 class SearchTrainInteractor: PresenterToInteractorProtocol {
     var _sourceStationCode = String()
     var _destinationStationCode = String()
     var presenter: InteractorToPresenterProtocol?
     private var serviceManager: ServiceManagable
+    private var reachablity: Reachable
+    private var xmlDecoder: XMLDecodable
 
-    init(serviceManager: ServiceManagable = ServiceManager()) {
+    init(serviceManager: ServiceManagable = ServiceManager(),
+         reachablity: Reachable = Reach(),
+         xmlDecoder: XMLDecodable = XMLDecoder()) {
         self.serviceManager = serviceManager
+        self.reachablity = reachablity
+        self.xmlDecoder = xmlDecoder
     }
 
-    func fetchallStations() {
-        if Reach().isNetworkReachable() == true {
-            serviceManager.fetchAllStations { (data) in
+    func fetchAllStations() {
+        if reachablity.isNetworkReachable() {
+            serviceManager.fetchAllStations { [weak self] (data) in
+
                 guard let responseData = data else {
-                    self.presenter!.showNoStationAvailabilityMessage()
+                    self?.presenter!.showNoStationAvailabilityMessage()
                     return
                 }
-
-                let station = try? XMLDecoder().decode(Stations.self, from: responseData)
-                self.presenter!.stationListFetched(list: station!.stationsList)
+                self?.handleAllStationResponse(responseData: responseData)
             }
         } else {
             self.presenter!.showNoInterNetAvailabilityMessage()
+        }
+    }
+
+    private func handleAllStationResponse(responseData: Data) {
+        do {
+            let station = try xmlDecoder.decode(Stations.self, from: responseData)
+            presenter!.stationListFetched(list: station.stationsList)
+        } catch (let error) {
+            presenter!.showNoStationAvailabilityMessage()
+            print(error)
+        }
+    }
+
+    private func handleSourceStationResponse(responseData: Data) {
+        do {
+            let stationData = try xmlDecoder.decode(StationData.self, from: responseData)
+            if stationData.trainsList.count == 0 {
+                presenter!.showNoTrainAvailbilityFromSource()
+            } else {
+                proceesTrainListforDestinationCheck(trainsList: stationData.trainsList)
+            }
+        } catch (let error) {
+            presenter!.showNoTrainAvailbilityFromSource()
+            print(error)
         }
     }
 
@@ -81,19 +74,13 @@ class SearchTrainInteractor: PresenterToInteractorProtocol {
         _sourceStationCode = sourceCode
         _destinationStationCode = destinationCode
 
-        if Reach().isNetworkReachable() {
-            serviceManager.fetchTrainsFromSource(sourceCode: sourceCode) { (data) in
+        if reachablity.isNetworkReachable() {
+            serviceManager.fetchTrainsFromSource(sourceCode: sourceCode) { [weak self]  (data) in
                 guard let responseData = data else {
-                    self.presenter!.showNoTrainAvailbilityFromSource()
+                    self?.presenter!.showNoTrainAvailbilityFromSource()
                     return
                 }
-                let stationData = try? XMLDecoder().decode(StationData.self, from: responseData)
-
-                if let _trainsList = stationData?.trainsList {
-                    self.proceesTrainListforDestinationCheck(trainsList: _trainsList)
-                } else {
-                    self.presenter!.showNoTrainAvailbilityFromSource()
-                }
+                self?.handleSourceStationResponse(responseData: responseData)
             }
         } else {
             self.presenter!.showNoInterNetAvailabilityMessage()
@@ -110,11 +97,12 @@ class SearchTrainInteractor: PresenterToInteractorProtocol {
         
         for index  in 0...trainsList.count-1 {
             group.enter()
-            if Reach().isNetworkReachable() {
+            if reachablity.isNetworkReachable() {
                 serviceManager.fetchTrainMovement(trainCode: trainsList[index].trainCode,
-                                                  trainDate: dateString) { movementsData in
+                                                  trainDate: dateString) { [weak self] movementsData in
+                                                    guard let self = self else { return }
 
-                                                    let trainMovements = try? XMLDecoder().decode(TrainMovementsData.self, from: movementsData!)
+                                                    let trainMovements = try? self.xmlDecoder.decode(TrainMovementsData.self, from: movementsData!)
 
                     if let _movements = trainMovements?.trainMovements {
                         let sourceIndex = _movements.firstIndex(where: {$0.locationCode.caseInsensitiveCompare(self._sourceStationCode) == .orderedSame})

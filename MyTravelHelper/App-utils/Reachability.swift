@@ -51,6 +51,10 @@ enum ReachabilityStatus: CustomStringConvertible {
     }
 }
 
+protocol Reachable {
+    func isNetworkReachable() -> Bool
+}
+
 open class Reach {
     func connectionStatus() -> ReachabilityStatus {
         var zeroAddress = sockaddr_in()
@@ -104,6 +108,8 @@ open class Reach {
         }
     }
 }
+
+extension Reach: Reachable {}
 
 extension ReachabilityStatus {
     fileprivate init(reachabilityFlags flags: SCNetworkReachabilityFlags) {

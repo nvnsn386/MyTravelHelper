@@ -68,12 +68,11 @@ class SearchTrainMockView:PresenterToViewProtocol {
 class SearchTrainInteractorMock:PresenterToInteractorProtocol {
     var presenter: InteractorToPresenterProtocol?
 
-    func fetchallStations() {
+    func fetchAllStations() {
         let station = Station(desc: "Belfast Central", latitude: 54.6123, longitude: -5.91744, code: "BFSTC", stationId: 228)
         presenter?.stationListFetched(list: [station])
     }
 
     func fetchTrainsFromSource(sourceCode: String, destinationCode: String) {
-
     }
 }

@@ -22,7 +22,7 @@ class SearchTrainPresenter:ViewToPresenterProtocol {
     var view:PresenterToViewProtocol?
 
     func fetchallStations() {
-        interactor?.fetchallStations()
+        interactor?.fetchAllStations()
     }
 
     private func getStationCode(stationName:String)->String {

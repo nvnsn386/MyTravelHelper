@@ -32,7 +32,7 @@ protocol PresenterToRouterProtocol: class {
 
 protocol PresenterToInteractorProtocol: class {
     var presenter:InteractorToPresenterProtocol? {get set}
-    func fetchallStations()
+    func fetchAllStations()
     func fetchTrainsFromSource(sourceCode:String,destinationCode:String)
 }
 
