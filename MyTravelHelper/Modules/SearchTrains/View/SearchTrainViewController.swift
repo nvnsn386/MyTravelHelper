@@ -27,17 +27,24 @@ class SearchTrainViewController: UIViewController {
     }
 
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         if stationsList.count == 0 {
             SwiftSpinner.useContainerView(view)
             SwiftSpinner.show("Please wait loading station list ....")
-            presenter?.fetchallStations()
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.presenter?.fetchallStations()
+            }
         }
     }
 
     @IBAction func searchTrainsTapped(_ sender: Any) {
         view.endEditing(true)
         showProgressIndicator(view: self.view)
-        presenter?.searchTapped(source: transitPoints.source, destination: transitPoints.destination)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self = self else { return }
+            self.presenter?.searchTapped(source: self.transitPoints.source,
+                                          destination: self.transitPoints.destination)
+        }
     }
 }
 
@@ -45,27 +52,37 @@ extension SearchTrainViewController:PresenterToViewProtocol {
     func showNoInterNetAvailabilityMessage() {
         trainsListTable.isHidden = true
         hideProgressIndicator(view: self.view)
-        showAlert(title: "No Internet", message: "Please Check you internet connection and try again", actionTitle: "Okay")
+        showAlert(title: "No Internet",
+                  message: "Please Check you internet connection and try again",
+                  actionTitle: "Okay")
     }
 
     func showNoTrainAvailbilityFromSource() {
         trainsListTable.isHidden = true
         hideProgressIndicator(view: self.view)
-        showAlert(title: "No Trains", message: "Sorry No trains arriving source station in another 90 mins", actionTitle: "Okay")
+        showAlert(title: "No Trains",
+                  message: "Sorry No trains arriving source station in another 90 mins",
+                  actionTitle: "Okay")
     }
 
     func updateLatestTrainList(trainsList: [StationTrain]) {
-        hideProgressIndicator(view: self.view)
         trains = trainsList
-        trainsListTable.isHidden = false
-        trainsListTable.reloadData()
+        hideProgressIndicator(view: self.view)
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.trainsListTable.isHidden = false
+            self.trainsListTable.reloadData()
+        }
     }
 
     func showNoTrainsFoundAlert() {
         trainsListTable.isHidden = true
         hideProgressIndicator(view: self.view)
         trainsListTable.isHidden = true
-        showAlert(title: "No Trains", message: "Sorry No trains Found from source to destination in another 90 mins", actionTitle: "Okay")
+        showAlert(title: "No Trains",
+                  message: "Sorry No trains Found from source to destination in another 90 mins",
+                  actionTitle: "Okay")
     }
 
     func showAlert(title:String,message:String,actionTitle:String) {
@@ -77,14 +94,18 @@ extension SearchTrainViewController:PresenterToViewProtocol {
     func showInvalidSourceOrDestinationAlert() {
         trainsListTable.isHidden = true
         hideProgressIndicator(view: self.view)
-        showAlert(title: "Invalid Source/Destination", message: "Invalid Source or Destination Station names Please Check", actionTitle: "Okay")
+        showAlert(title: "Invalid Source/Destination",
+                  message: "Invalid Source or Destination Station names Please Check",
+                  actionTitle: "Okay")
     }
 
     func saveFetchedStations(stations: [Station]?) {
         if let _stations = stations {
           self.stationsList = _stations
         }
-        SwiftSpinner.hide()
+        DispatchQueue.main.async {
+            SwiftSpinner.hide()
+        }
     }
 }
 
