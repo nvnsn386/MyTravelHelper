@@ -120,11 +120,15 @@ extension SearchTrainViewController:UITextFieldDelegate {
                 desiredSearchText = String(desiredSearchText.dropLast())
             }
 
-            dropDown.dataSource = stationsList
+            dropDown.dataSource = getStationNameList()
             dropDown.show()
             dropDown.reloadAllComponents()
         }
         return true
+    }
+
+    private func getStationNameList() -> [String] {
+        return stationsList.map({ $0.stationDesc })
     }
 }
 
