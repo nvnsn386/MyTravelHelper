@@ -1,18 +1,15 @@
 PODS:
-  - Alamofire (4.8.1)
-  - DropDown (2.3.12)
-  - SwiftSpinner (1.6.2)
+  - DropDown (2.3.13)
+  - SwiftSpinner (2.1.0)
   - XMLParsing (0.0.3)
 
 DEPENDENCIES:
-  - Alamofire (~> 4.3)
   - DropDown
   - SwiftSpinner
   - XMLParsing (from `https://github.com/ShawnMoore/XMLParsing.git`)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
-    - Alamofire
+  trunk:
     - DropDown
     - SwiftSpinner
 
@@ -26,11 +23,10 @@ CHECKOUT OPTIONS:
     :git: https://github.com/ShawnMoore/XMLParsing.git
 
 SPEC CHECKSUMS:
-  Alamofire: 16ce2c353fb72865124ddae8a57c5942388f4f11
-  DropDown: 0bcc278799ec11a3d34ce1aac9367fbbaf5423d9
-  SwiftSpinner: 3a4c6dea425e5a31b908a8b1dd5dcd1ad4d96340
+  DropDown: 8a2116376c1981888557f72ec2ffc9a5e0e456ec
+  SwiftSpinner: 0f15c006307f8d8bbac075638927ec1361b565d7
   XMLParsing: 085edb6fa22c71d6b53a79299f990a91e7414d19
 
-PODFILE CHECKSUM: 0f1a65525370f9291eb939c65819c3c828159bd4
+PODFILE CHECKSUM: 22239f70fa35071664aa446ff68d50790c67cff8
 
-COCOAPODS: 1.5.3
+COCOAPODS: 1.9.3

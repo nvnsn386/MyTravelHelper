@@ -8,8 +8,6 @@
 
 import Foundation
 import XMLParsing
-import Alamofire
-
 
 protocol ServiceManagable {
     func fetchAllStations(completionHandler: @escaping (Data?) -> Void)
@@ -18,25 +16,38 @@ protocol ServiceManagable {
 }
 
 class ServiceManager: ServiceManagable {
+    private let baseURL = "http://api.irishrail.ie/realtime/realtime.asmx"
+    let session = URLSession.shared
+
+    private func getData(pathComponent: String, completionHandler: @escaping (Data?) -> Void) {
+        let url = URL(string: baseURL + pathComponent)!
+        var request = URLRequest(url: url)
+        request.httpMethod  = "get"
+
+        let task = session.dataTask(with: request as URLRequest, completionHandler: { data, response, error in
+            guard error == nil else {
+                completionHandler(nil)
+                return
+            }
+            guard let data = data else {
+                completionHandler(nil)
+                return
+            }
+            completionHandler(data)
+        })
+        task.resume()
+    }
+
     func fetchAllStations(completionHandler: @escaping (Data?) -> Void) {
-        Alamofire.request("http://api.irishrail.ie/realtime/realtime.asmx/getAllStationsXML")
-            .response { (response) in
-                completionHandler(response.data)
-        }
+        getData(pathComponent: "/getAllStationsXML", completionHandler: completionHandler)
     }
 
     func fetchTrainsFromSource(sourceCode: String, completionHandler: @escaping (Data?) -> Void) {
-        let urlString = "http://api.irishrail.ie/realtime/realtime.asmx/getStationDataByCodeXML?StationCode=\(sourceCode)"
-        Alamofire.request(urlString).response { (response) in
-            completionHandler(response.data)
-        }
+        getData(pathComponent: "/getStationDataByCodeXML?StationCode=\(sourceCode)", completionHandler: completionHandler)
     }
 
     func fetchTrainMovement(trainCode: String, trainDate: String, completionHandler: @escaping (Data?) -> Void) {
-          let _urlString = "http://api.irishrail.ie/realtime/realtime.asmx/getTrainMovementsXML?TrainId=\(trainCode)&TrainDate=\(trainDate)"
-        Alamofire.request(_urlString).response { (response) in
-            completionHandler(response.data)
-        }
+        getData(pathComponent: "/getTrainMovementsXML?TrainId=\(trainCode)&TrainDate=\(trainDate)", completionHandler: completionHandler)
     }
 }
 
@@ -57,6 +68,7 @@ class SearchTrainInteractor: PresenterToInteractorProtocol {
                     self.presenter!.showNoStationAvailabilityMessage()
                     return
                 }
+
                 let station = try? XMLDecoder().decode(Stations.self, from: responseData)
                 self.presenter!.stationListFetched(list: station!.stationsList)
             }

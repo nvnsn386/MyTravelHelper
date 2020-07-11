@@ -7,7 +7,6 @@ target 'MyTravelHelper' do
 
   # Pods for MyTravelHelper
   pod 'XMLParsing', :git => 'https://github.com/ShawnMoore/XMLParsing.git'
-  pod 'Alamofire', '~> 4.3'
   pod 'DropDown'
   pod 'SwiftSpinner'
 

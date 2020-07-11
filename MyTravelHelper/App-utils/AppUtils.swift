@@ -19,9 +19,11 @@ func showProgressIndicator(view:UIView){
 
 /* Hide progress Indicator */
 func hideProgressIndicator(view:UIView){
-    view.isUserInteractionEnabled = true
+    DispatchQueue.main.async {
+        view.isUserInteractionEnabled = true
 
-    if let viewWithTag = view.viewWithTag(PROGRESS_INDICATOR_VIEW_TAG) {
-        viewWithTag.removeFromSuperview()
+        if let viewWithTag = view.viewWithTag(PROGRESS_INDICATOR_VIEW_TAG) {
+            viewWithTag.removeFromSuperview()
+        }
     }
 }
